@@ -8,6 +8,8 @@ using namespace std;
 
 const string ClientsFileName = "ClientsFile.txt";
 
+void Bank();
+
 short ReadNumberInRange(short From, short To, string Message) {
 	short Choose;
 	do {
@@ -152,8 +154,6 @@ void PrintAllClientsScreen(vector<stClientData> vClients) {
 	cout << "\n__________________________________________________";
 	cout << "___________________________________________________\n";
 
-	cout << "\n\nPress any key to go back to Main Menue...";
-	system("pause>0");
 
 }
 
@@ -317,8 +317,6 @@ void DeleteClientScreen(vector<stClientData> vClients, string FileName) {
 
 	}
 
-	cout << "\n\nPress any key to go back to Main Menue...";
-	system("pause>0");
 }
 
 stClientData UpdateClientByAccountNumber(string AccountNumber) {
@@ -389,11 +387,9 @@ void UpdateClientInfoScreen(vector<stClientData> vClients, string FileName) {
 
 	}
 
-	cout << "\n\nPress any key to go back to Main Menue...";
-	system("pause>0");
 }
 
-void	FindClientScreen(vector<stClientData> vClients) {
+void FindClientScreen(vector<stClientData> vClients) {
 
 	cout << "\n----------------------------------------\n";
 	cout << "\tFind Client Screen";
@@ -414,8 +410,6 @@ void	FindClientScreen(vector<stClientData> vClients) {
 
 	}
 
-	cout << "\n\nPress any key to go back to Main Menue...";
-	system("pause>0");
 }
 
 void AddClient(string FileName, bool WithAccountNumber = false, string AccountNumber = "") {
@@ -446,7 +440,7 @@ void AddNewClientsScreen(vector<stClientData> vClients, string FileName) {
 
 	do {
 
-		string AccountNumber = ReadAccountNumber("\nEnter Account 0Number? ");
+		string AccountNumber = ReadAccountNumber("\nEnter Account Number? ");
 
 		while (FindClientByAccountNumber(vClients, Client, AccountNumber)) {
 			cout << "\nClient with [" << AccountNumber << "] already exists, Enter another Account Number? ";
@@ -460,8 +454,7 @@ void AddNewClientsScreen(vector<stClientData> vClients, string FileName) {
 
 	} while (toupper(Answer) == 'Y');
 
-	cout << "\n\nPress any key to go back to Main Menue...";
-	system("pause>0");
+
 }
 
 void ExitScreen() {
@@ -470,12 +463,19 @@ void ExitScreen() {
 	cout << "\tProgram End :-)";
 	cout << "\n----------------------------------------\n";
 
-	cout << "\n\nPress any key to go back to Main Menue...";
 	system("pause>0");
 
 }
 
-void BankMainScreen() {
+void GoBackToMainMenue() {
+
+	cout << "\n\nPress any key to go back to Main Menue...";
+	system("pause>0");
+	Bank();
+
+}
+
+void Bank() {
 
 	vector<stClientData> vClients = LoadClientsDataFromFile(ClientsFileName);
 
@@ -487,27 +487,27 @@ void BankMainScreen() {
 	case 1:
 		system("cls");
 		PrintAllClientsScreen(vClients);
-		BankMainScreen();
+		GoBackToMainMenue();
 		break;
 	case 2:
 		system("cls");
 		AddNewClientsScreen(vClients, ClientsFileName);
-		BankMainScreen();
+		GoBackToMainMenue();
 		break;
 	case 3:
 		system("cls");
 		DeleteClientScreen(vClients, ClientsFileName);
-		BankMainScreen();
+		GoBackToMainMenue();
 		break;
 	case 4:
 		system("cls");
 		UpdateClientInfoScreen(vClients, ClientsFileName);
-		BankMainScreen();
+		GoBackToMainMenue();
 		break;
 	case 5:
 		system("cls");
 		FindClientScreen(vClients);
-		BankMainScreen();
+		GoBackToMainMenue();
 		break;
 	case 6:
 		system("cls");
@@ -520,7 +520,7 @@ void BankMainScreen() {
 
 int main() {
 
-	BankMainScreen();
+	Bank();
 
 
 }
