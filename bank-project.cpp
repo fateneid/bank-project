@@ -9,6 +9,7 @@ using namespace std;
 const string ClientsFileName = "ClientsFile.txt";
 
 void Bank();
+void TransactionsMenueScreen();
 
 short ReadNumberInRange(short From, short To, string Message) {
 	short Choose;
@@ -26,6 +27,19 @@ string ReadAccountNumber(string Message) {
 	return AccountNumber;
 }
 
+struct stClientData {
+
+	string AccountNumber = "";
+	string PinCode = "";
+	string Name = "";
+	string Phone = "";
+	double AccountBalance = 0.0;
+	bool MarkForDelete = false;
+
+};
+
+enum enMenue { BankMainMenueScreen = 1, TransactionsMainMenueScreen = 2 };
+
 void PrintMainMenueScreen() {
 
 	system("cls");
@@ -37,21 +51,11 @@ void PrintMainMenueScreen() {
 	cout << "\t\t[3] Delete Client.\n";
 	cout << "\t\t[4] Update Client Info.\n";
 	cout << "\t\t[5] Find Client.\n";
-	cout << "\t\t[6] Exit.\n";
+	cout << "\t\t[6] Transactions.\n";
+	cout << "\t\t[7] Exit.\n";
 	cout << "=========================================================\n";
 
 }
-
-struct stClientData {
-
-	string AccountNumber = "";
-	string PinCode = "";
-	string Name = "";
-	string Phone = "";
-	double AccountBalance = 0.0;
-	bool MarkForDelete = false;
-
-};
 
 vector<string> SplitString(string MyString, string Split = "#//#") {
 
@@ -467,11 +471,208 @@ void ExitScreen() {
 
 }
 
-void GoBackToMainMenue() {
+void GoBackToMainMenue(enMenue Menue) {
 
-	cout << "\n\nPress any key to go back to Main Menue...";
-	system("pause>0");
-	Bank();
+	switch (Menue)
+	{
+	case enMenue::BankMainMenueScreen:
+		cout << "\n\nPress any key to go back to Main Menue...";
+		system("pause>0");
+		Bank();
+		break;
+	case enMenue::TransactionsMainMenueScreen:
+		cout << "\n\nPress any key to go back to Transactions Menue...";
+		system("pause>0");
+		TransactionsMenueScreen();
+	    break;
+	}
+}
+
+void PrintTransactionsMenue() {
+
+	system("cls");
+	cout << "=========================================================\n";
+	cout << "\t\t\tTransactions Menue Screen\n";
+	cout << "=========================================================\n";
+	cout << "\t\t[1] Deposit.\n";
+	cout << "\t\t[2] Withdraw.\n";
+	cout << "\t\t[3] Total Balances.\n";
+	cout << "\t\t[4] Main Menue.\n";
+	cout << "=========================================================\n";
+
+}
+
+double ReadTransactionAmount(string Message) {
+	double TransactionAmount = 0.0;
+	cout << Message;
+	cin >> TransactionAmount;
+	return TransactionAmount;
+}
+
+void Transaction(vector<stClientData>& vClients, double TransactionAmount, string AccountNumber, string FileName, bool TransactionType = true) {
+
+	if (!TransactionType) {
+		TransactionAmount = TransactionAmount * -1;  // if TransactionType false: Withdraw, true: Deposit
+	}
+
+	for (stClientData& stClient : vClients) {
+
+		if (stClient.AccountNumber == AccountNumber) {
+
+			stClient.AccountBalance += TransactionAmount;
+			break;
+
+		}
+	}
+
+	SaveDataFromVectorToFile(vClients, FileName);
+
+}
+
+void DepositScreen(vector<stClientData> vClients, string FileName) {
+
+	cout << "\n----------------------------------------\n";
+	cout << "\tDeposit Screen";
+	cout << "\n----------------------------------------\n";
+
+	stClientData Client;
+	char Answer;
+
+	string AccountNumber = ReadAccountNumber("\nPlease enter AccountNumber? ");
+
+	while (!FindClientByAccountNumber(vClients, Client, AccountNumber)) {
+
+		cout << "\nClient with Account Number (" << AccountNumber << ") is Not Found!\n";
+		AccountNumber = ReadAccountNumber("\nPlease enter AccountNumber? ");
+
+	}
+
+	PrintClientCard(Client);
+
+	double DepositAmount = ReadTransactionAmount("\n\nPlease enter deposit amount? ");
+
+	cout << "\n\nAre you sure you want to perform this transaction? y/n ? ";
+	cin >> Answer;
+
+	if (toupper(Answer) == 'Y') {
+
+		Transaction(vClients, DepositAmount, AccountNumber, FileName);
+		cout << "\nDone Successfully. New balance is: " << Client.AccountBalance + DepositAmount << endl;
+
+	}
+
+
+}
+
+void WithdrawScreen(vector<stClientData> vClients, string FileName) {
+
+	cout << "\n----------------------------------------\n";
+	cout << "\tWithdraw Screen";
+	cout << "\n----------------------------------------\n";
+
+	stClientData Client;
+	char Answer;
+	double WithdrawAmount;
+
+	string AccountNumber = ReadAccountNumber("\nPlease enter AccountNumber? ");
+
+	while (!FindClientByAccountNumber(vClients, Client, AccountNumber)) {
+
+		AccountNumber = ReadAccountNumber("\nPlease enter AccountNumber? ");
+		cout << "\nClient with Account Number (" << AccountNumber << ") is Not Found!\n";
+
+	}
+
+	PrintClientCard(Client);
+
+	do {
+
+		WithdrawAmount = ReadTransactionAmount("\n\nPlease enter withdraw amount? ");
+
+		if (WithdrawAmount > Client.AccountBalance) {
+
+			cout << "\n\nAmount Exceeds the balance, you can withdraw up to: " << Client.AccountBalance << endl;
+
+		}
+
+	} while (WithdrawAmount > Client.AccountBalance);
+
+	cout << "\n\nAre you sure you want to perform this transaction? y/n ? ";
+	cin >> Answer;
+
+	if (toupper(Answer) == 'Y') {
+
+		Transaction(vClients, WithdrawAmount, AccountNumber, FileName, false);
+
+		cout << "\nDone Successfully. New balance is: " << Client.AccountBalance - WithdrawAmount << endl;
+
+	}
+
+}
+
+void TotalBalancesScreen(vector<stClientData> vClients) {
+
+	cout << "\n\t\t\t\tBalances List (" << vClients.size() << ") Client (s).";
+	cout << "\n__________________________________________________";
+	cout << "___________________________________________________\n\n";
+
+	cout << "| " << setw(20) << left << "Account Number";
+	cout << "| " << setw(50) << left << "Client Name";
+	cout << "| " << setw(20) << left << "Balance";
+
+	cout << "\n__________________________________________________";
+	cout << "___________________________________________________\n\n";
+
+	long double TotalBalances = 0.0;
+
+	for (stClientData stClient : vClients) {
+
+		cout << "| " << setw(20) << left << stClient.AccountNumber;
+		cout << "| " << setw(50) << left << stClient.Name;
+		cout << "| " << setw(20) << left << stClient.AccountBalance;
+
+		cout << endl;
+
+		TotalBalances += stClient.AccountBalance;
+
+	}
+	cout << "\n__________________________________________________";
+	cout << "___________________________________________________\n";
+
+	cout << fixed << setprecision(2);
+	cout << "\n\t\t\t\t\tTotal Balances = " << TotalBalances << endl;
+
+}
+
+void TransactionsMenueScreen() {
+
+	vector<stClientData> vClients = LoadClientsDataFromFile(ClientsFileName);
+
+	PrintTransactionsMenue();
+	short Choose = ReadNumberInRange(1, 4, "Choose what do you want to do? [1 to 4]? ");
+
+	switch (Choose)
+	{
+	case 1:
+		system("cls");
+		DepositScreen(vClients, ClientsFileName);
+		GoBackToMainMenue(enMenue::TransactionsMainMenueScreen);
+		break;
+	case 2:
+		system("cls");
+		WithdrawScreen(vClients, ClientsFileName);
+		GoBackToMainMenue(enMenue::TransactionsMainMenueScreen);
+		break;
+	case 3:
+		system("cls");
+		TotalBalancesScreen(vClients);
+		GoBackToMainMenue(enMenue::TransactionsMainMenueScreen);
+		break;
+	case 4:
+		system("cls");
+		Bank();
+		break;
+	}
 
 }
 
@@ -480,43 +681,46 @@ void Bank() {
 	vector<stClientData> vClients = LoadClientsDataFromFile(ClientsFileName);
 
 	PrintMainMenueScreen();
-	short Choose = ReadNumberInRange(1, 6, "Choose what do you want to do? [1 to 6]? ");
+	short Choose = ReadNumberInRange(1, 7, "Choose what do you want to do? [1 to 7]? ");
 
 	switch (Choose)
 	{
 	case 1:
 		system("cls");
 		PrintAllClientsScreen(vClients);
-		GoBackToMainMenue();
+		GoBackToMainMenue(enMenue::BankMainMenueScreen);
 		break;
 	case 2:
 		system("cls");
 		AddNewClientsScreen(vClients, ClientsFileName);
-		GoBackToMainMenue();
+		GoBackToMainMenue(enMenue::BankMainMenueScreen);
 		break;
 	case 3:
 		system("cls");
 		DeleteClientScreen(vClients, ClientsFileName);
-		GoBackToMainMenue();
+		GoBackToMainMenue(enMenue::BankMainMenueScreen);
 		break;
 	case 4:
 		system("cls");
 		UpdateClientInfoScreen(vClients, ClientsFileName);
-		GoBackToMainMenue();
+		GoBackToMainMenue(enMenue::BankMainMenueScreen);
 		break;
 	case 5:
 		system("cls");
 		FindClientScreen(vClients);
-		GoBackToMainMenue();
+		GoBackToMainMenue(enMenue::BankMainMenueScreen);
 		break;
 	case 6:
+		system("cls");
+		TransactionsMenueScreen();
+		break;
+	case 7:
 		system("cls");
 		ExitScreen();
 		break;
 	}
 
 }
-
 
 int main() {
 
